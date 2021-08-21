@@ -1,0 +1,7 @@
+apiVersion: openldap.minsait.com/v1alpha1
+kind: Openldap
+metadata:
+  name: openldap-sample
+spec:
+  # Add fields here
+  foo: bar

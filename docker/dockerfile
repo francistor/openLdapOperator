@@ -1,0 +1,14 @@
+# Simple Openldap image
+FROM ubuntu
+# Install dependencies
+RUN apt-get update && apt-get install -y groff-base && apt-get install -y build-essential && apt-get install -y libssl-dev && apt-get install -y libsasl2-dev && apt-get install -y libltdl-dev && apt-get install -y curl
+# Download from Openldap repository
+RUN curl -o openldap.tgz https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.5.5.tgz
+RUN gunzip -c openldap.tgz | tar xvfB -
+# Install openldap
+RUN rm openldap.tgz && cd openldap-2.5.5 && ./configure --enable-accesslog=yes --with-cyrus-sasl=yes --enable-ppolicy=yes --enable-auditlog=yes && make depend && make && make install
+# Copy initial configuration file, with permisions to read/modify configuration
+COPY slapd.conf /usr/local/etc/openldap/slapd.conf
+# Create directories and convert from file-based to dynamic configuration
+# slaptest -n 0 for testing only the configuration database. Otherwise tries to open and throws error
+RUN mkdir -p /usr/local/etc/openldap/slapd.d && mkdir -p /usr/local/var/openldap-data && slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d

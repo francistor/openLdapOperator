@@ -1,0 +1,20 @@
+# permissions for end users to view openldaps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: openldap-viewer-role
+rules:
+- apiGroups:
+  - openldap.minsait.com
+  resources:
+  - openldaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - openldap.minsait.com
+  resources:
+  - openldaps/status
+  verbs:
+  - get

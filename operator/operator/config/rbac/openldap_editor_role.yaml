@@ -1,0 +1,24 @@
+# permissions for end users to edit openldaps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: openldap-editor-role
+rules:
+- apiGroups:
+  - openldap.minsait.com
+  resources:
+  - openldaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - openldap.minsait.com
+  resources:
+  - openldaps/status
+  verbs:
+  - get
