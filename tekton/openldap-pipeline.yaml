@@ -47,6 +47,7 @@ spec:
       value: harbor.jativa:443/francisco/openldap:0.1
     - name: DOCKERFILE
       value: docker/dockerfile
+    # This is necesary because Kaniko has not the CA certificate used by harbor
     - name: EXTRA_ARGS
       value:
       - --skip-tls-verify
