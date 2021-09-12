@@ -7,7 +7,7 @@ spec:
   description: >-
     Task to build an operator using operator-sdk
   params:
-  - name: goVersion
+  - name: go-version
     description: golang version to use for builds
     default: "latest"
   workspaces:
@@ -18,4 +18,4 @@ spec:
     workingDir: $(workspaces.source.path)
     script: |
       cd operator
-      make test
+      make test build

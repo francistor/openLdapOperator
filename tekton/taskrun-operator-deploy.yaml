@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: deploy-operator 
+spec:
+  serviceAccountName: pipeline-account
+  taskRef:
+    name: kubernetes-actions
+  workspaces:
+  - name: manifest-dir
+    persistentVolumeClaim:
+        claimName: mypvc
+  params:
+    - name: script 
+      value: |
+        # Install kustomize standalone, needed for editing the image
+        rm -rf kustomize
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+        workdir=$(pwd)
+        # Taken from the operator makefile, deploy task. Edits the image and deploys the kubernetes artifacts
+        cd $workdir/operator/config/manager && $workdir/kustomize edit set image controller=harbor.jativa:443/francisco/openldapoperator:0.1
+        cd $workdir/operator && $workdir/kustomize build config/default | kubectl apply -f -

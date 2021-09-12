@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpod
+spec:
+  containers:
+  - image: ubuntu 
+    name: ubuntu 
+    command: ["sleep", "36000"]
+    volumeMounts:
+    - name: myvolume 
+      mountPath: /var/tekton-resource
+  volumes:
+  - name: myvolume 
+    persistentVolumeClaim:
+      claimName: mypvc

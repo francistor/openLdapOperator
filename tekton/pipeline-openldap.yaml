@@ -1,0 +1,123 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: openldap-build-deploy
+spec:
+  workspaces: 
+  - name: repo-credentials
+    description: Secret with docker credentials for image repository (config.json key)
+  - name: git-source
+    description: Git repo with the source code
+
+  params:
+  - name: gitUrl
+    description: Git repo url
+  - name: revision
+    description: The revision to fetch
+    default: "master"
+  - name: openldap-image
+    description: URL-TAG of the openldap image to generate
+    default: "harbor.jativa:443/francisco/openldap:0.1"
+  - name: operator-image
+    description: URL-TAG of the operator image to generate
+    default: "harbor.jativa:443/francisco/openldapoperator:0.1"
+  - name: go-version
+    description: go version to use for operator building
+    default: latest
+
+  tasks:
+
+  # Clone the project repository containing all the software
+  - name: clone-repo
+    taskRef:
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: git-source
+    params:
+    - name: url
+      value: "$(params.gitUrl)"
+    - name: revision
+      value: "$(params.revision)"
+    - name: deleteExisting
+      value: "true"
+
+  # Build openldap image
+  - name: build-openldapimage
+    taskRef:
+      name: kaniko
+    runAfter:
+    - clone-repo
+    workspaces:
+    - name: source
+      workspace: git-source
+    - name: dockerconfig
+      workspace: repo-credentials
+    params:
+    - name: CONTEXT
+      value: docker
+    - name: IMAGE
+      value: "$(params.openldap-image)"
+    - name: DOCKERFILE
+      value: docker/dockerfile
+    # This is necesary because Kaniko has not the CA certificate used by harbor
+    - name: EXTRA_ARGS
+      value:
+      - --skip-tls-verify
+
+  # Build the operator
+  - name: build-operator
+    taskRef: 
+      name: operator-build
+    runAfter: 
+    - build-openldapimage
+    workspaces:
+    - name: source
+      workspace: git-source
+    params:
+    - name: go-version
+      value: "$(params.go-version)"
+
+  # Push operator image to repository
+  - name: build-operatorimage
+    taskRef:
+      name: kaniko
+    runAfter:
+    - build-operator
+    workspaces:
+    - name: source
+      workspace: git-source
+    - name: dockerconfig
+      workspace: repo-credentials
+    params:
+    - name: CONTEXT
+      value: operator # Directory where the dockerfile resides
+    - name: IMAGE
+      value: "$(params.operator-image)"
+    - name: DOCKERFILE
+      value: operator/Dockerfile
+    # This is necesary because Kaniko has not the CA certificate used by harbor
+    - name: EXTRA_ARGS
+      value:
+      - --skip-tls-verify
+
+  # Deploy the operator in the cluster
+  - name: deploy-operator
+    taskRef:
+      name: kubernetes-actions
+    runAfter:
+    - build-operatorimage
+    workspaces:
+    - name: manifest-dir
+      workspace: git-source
+    params:
+    - name: script 
+      value: |
+        # Install kustomize standalone, needed for editing the image
+        rm -rf kustomize
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+        workdir=$(pwd)
+        # Taken from the operator makefile, deploy task. Edits the image and deploys the kubernetes artifacts
+        cd $workdir/operator/config/manager && $workdir/kustomize edit set image controller=harbor.jativa:443/francisco/openldapoperator:0.1
+        cd $workdir/operator && $workdir/kustomize build config/default | kubectl apply -f -
+    
