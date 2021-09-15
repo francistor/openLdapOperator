@@ -7,7 +7,7 @@ spec:
   description: >-
     Task to build an operator using operator-sdk
   params:
-  - name: go-version
+  - name: goVersion
     description: golang version to use for builds
     default: "latest"
   workspaces:

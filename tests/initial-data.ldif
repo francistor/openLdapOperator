@@ -1,0 +1,13 @@
+dn: dc=minsait,dc=com
+objectclass: dcObject
+objectclass: organization
+o: minsait
+dc: minsait
+
+dn: cn=Manager,dc=minsait,dc=com
+objectclass: organizationalRole
+cn: Manager
+
+dn: ou=people,dc=minsait,dc=com
+objectclass: organizationalUnit
+ou: people

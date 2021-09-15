@@ -36,11 +36,15 @@ spec:
           spec:
             description: OpenldapSpec defines the desired state of Openldap
             properties:
+              image:
+                description: Image to use
+                type: string
               size:
                 description: Number of ldap nodes to deploy
                 format: int32
                 type: integer
             required:
+            - image
             - size
             type: object
           status:

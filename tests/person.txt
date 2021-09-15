@@ -1,0 +1,8 @@
+objectclass: inetorgperson
+sn: Sn[A]
+departmentNumber: [A]
+mail: m[A]@minsait.com
+displayName: Mister [A]
+title: title[A]
+street: street[A]
+postalAddress: the postal address [A]

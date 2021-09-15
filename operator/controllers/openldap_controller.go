@@ -32,6 +32,8 @@ import (
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	openldapv1alpha1 "ldapOperator/api/v1alpha1"
+
+	"fmt"
 )
 
 // OpenldapReconciler reconciles a Openldap object
@@ -58,6 +60,8 @@ type OpenldapReconciler struct {
 func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
 
+	log.Info("Reconcile", fmt.Sprintf("%v", ctx), fmt.Sprintf("%v", req))
+
 	openldap := &openldapv1alpha1.Openldap{}
 	if err := r.Get(ctx, req.NamespacedName, openldap); err != nil {
 		// Ignore this type of errors
@@ -76,7 +80,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if err != nil && errors.IsNotFound(err) {
 		// Create a new Deployment
 		deployment := r.deploymentForOpenldap(openldap)
-		log.Info("About to create a deployment for Openldap", "Deployment.Namespace:", openldap.Namespace, "Deployment.Name", openldap.Name)
+		log.Info("About to create a deployment for Openldap", "Deployment.Namespace:", openldap.Namespace, "Deployment.Name", openldap.Name, "Image", openldap.Spec.Image)
 		if err := r.Create(ctx, deployment); err != nil {
 			log.Error(err, "Failed creating deployment for Openldap", "Deployment.Namespace:", openldap.Namespace, "Deployment.Name", openldap.Name)
 			return ctrl.Result{}, err
@@ -99,6 +103,25 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 		// Requeue after some time
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
+	// Create service if it does not exist
+	existingService := &corev1.Service{}
+	err = r.Get(ctx, types.NamespacedName{Name: openldap.Name + "-service", Namespace: openldap.Namespace}, existingService)
+	if err != nil && errors.IsNotFound(err) {
+		// Create the service
+		service := r.serviceForOpenldap(openldap)
+		log.Info("About to create service for Openldap")
+		if err := r.Create(ctx, service); err != nil {
+			log.Error(err, "Failed creating service for Openldap")
+			return ctrl.Result{}, err
+		}
+
+		// Service created. Return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get service")
+		return ctrl.Result{}, err
 	}
 
 	// Update status with pod names
@@ -137,9 +160,11 @@ func (r *OpenldapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// Creates the deployment
 func (r *OpenldapReconciler) deploymentForOpenldap(openldap *openldapv1alpha1.Openldap) *appsv1.Deployment {
 	labels := map[string]string{"app": "openldap", "openldap_cr": openldap.Name}
 	replicas := openldap.Spec.Size
+	image := openldap.Spec.Image
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -157,11 +182,11 @@ func (r *OpenldapReconciler) deploymentForOpenldap(openldap *openldapv1alpha1.Op
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   "harbor:443/francisco/myldap:0.2",
+						Image:   image,
 						Name:    "managedopenldap",
 						Command: []string{"/usr/local/libexec/slapd", "-F", "/usr/local/etc/openldap/slapd.d", "-h", "ldap:/// ldapi:///", "-d", "stats"},
 						Ports: []corev1.ContainerPort{{
-							ContainerPort: 639,
+							ContainerPort: 389,
 							Name:          "ldap",
 						}},
 					}},
@@ -172,4 +197,26 @@ func (r *OpenldapReconciler) deploymentForOpenldap(openldap *openldapv1alpha1.Op
 
 	ctrl.SetControllerReference(openldap, deployment, r.Scheme)
 	return deployment
+}
+
+// Creates the service
+func (r *OpenldapReconciler) serviceForOpenldap(openldap *openldapv1alpha1.Openldap) *corev1.Service {
+	labels := map[string]string{"app": "openldap"}
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      openldap.Name + "-service",
+			Namespace: openldap.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: labels,
+			Ports: []corev1.ServicePort{{
+				Name:     "ldap",
+				Protocol: "TCP",
+				Port:     389,
+			}},
+		},
+	}
+
+	ctrl.SetControllerReference(openldap, service, r.Scheme)
+	return service
 }

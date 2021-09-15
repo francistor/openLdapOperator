@@ -30,6 +30,9 @@ type OpenldapSpec struct {
 	//+kubebuilder:validation:Minimuim=0
 	// Number of ldap nodes to deploy
 	Size int32 `json:"size"`
+
+	// Image to use
+	Image string `json:"image"`
 }
 
 // OpenldapStatus defines the observed state of Openldap

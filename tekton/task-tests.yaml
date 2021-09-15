@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: tests
+  labels:
+spec:
+  description: >-
+    Task to execute the robot tests specified in the "test" directory of the resource
+  params:
+  workspaces:
+  - name: source
+  steps:
+  - name: test
+    image: python:3.9.7-bullseye
+    workingDir: $(workspaces.source.path)
+    script: |
+      # pip install --upgrade pip
+      python3 -m pip install --ignore-installed haikunator requests pyvcloud progressbar pathlib robotframework robotframework-seleniumlibrary robotframework-requests robotframework-SSHLibrary
+      cd tests
+      robot ldap.robot -d output

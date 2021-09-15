@@ -75,7 +75,7 @@ spec:
     - name: source
       workspace: git-source
     params:
-    - name: go-version
+    - name: goVersion
       value: "$(params.go-version)"
 
   # Push operator image to repository
