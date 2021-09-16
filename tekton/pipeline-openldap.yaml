@@ -101,7 +101,7 @@ spec:
       value:
       - --skip-tls-verify
 
-  # Deploy the operator in the cluster
+  # Deploy the operator and openldap instance in the cluster
   - name: deploy-operator
     taskRef:
       name: kubernetes-actions
@@ -116,8 +116,21 @@ spec:
         # Install kustomize standalone, needed for editing the image
         rm -rf kustomize
         curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+
         workdir=$(pwd)
         # Taken from the operator makefile, deploy task. Edits the image and deploys the kubernetes artifacts
         cd $workdir/operator/config/manager && $workdir/kustomize edit set image controller=harbor.jativa:443/francisco/openldapoperator:0.1
         cd $workdir/operator && $workdir/kustomize build config/default | kubectl apply -f -
+
+        # Deploy one openldap instance
+        cd $workdir/tekton && kubectl apply -f cr-ldap-sample.yaml
+
+  - name: tests
+    taskRef:
+      name: tests
+    runAfter:
+    - deploy-operator
+    workspaces:
+    - name: source
+      workspace: git-source
     

@@ -14,10 +14,18 @@ spec:
     image: python:3.9.7-bullseye
     workingDir: $(workspaces.source.path)
     script: |
+      # Otherwise packets cannot be installed
       apt update
-      # pip install --upgrade pip
+
+      # Install Robot
       python3 -m pip install --ignore-installed haikunator requests pyvcloud progressbar pathlib robotframework robotframework-seleniumlibrary robotframework-requests robotframework-SSHLibrary
+      
+      # Install ldapsearch et al
       apt install -y ldap-utils
+      
+      # Install ldclt
       apt install -y 389-ds-base
+
+      # Execute tests
       cd tests
       robot -d output ldap.robot 
