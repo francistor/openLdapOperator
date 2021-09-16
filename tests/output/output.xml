@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot generator="Robot 4.1.1 (Python 3.6.9 on linux)" generated="20210915 18:22:30.692" rpa="false" schemaversion="2">
+<robot generator="Robot 4.1.1 (Python 3.6.9 on linux)" generated="20210915 19:06:13.946" rpa="false" schemaversion="2">
 <suite id="s1" name="Ldap" source="/home/francisco/openLdapOperator/tests/ldap.robot">
 <kw name="Clean data" type="SETUP">
 <kw name="Run Process" library="Process">
@@ -16,12 +16,12 @@
 <arg>-r</arg>
 <arg>dc\=minsait,dc\=com</arg>
 <doc>Runs a process and waits for it to complete.</doc>
-<msg timestamp="20210915 18:22:30.717" level="INFO">Starting process:
+<msg timestamp="20210915 19:06:13.964" level="INFO">Starting process:
 ldapdelete -h localhost -p 1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -r dc=minsait,dc=com</msg>
-<msg timestamp="20210915 18:22:30.718" level="INFO">Waiting for process to complete.</msg>
-<msg timestamp="20210915 18:22:36.411" level="INFO">Process completed.</msg>
-<msg timestamp="20210915 18:22:36.411" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:30.716" endtime="20210915 18:22:36.411"/>
+<msg timestamp="20210915 19:06:13.966" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210915 19:06:19.641" level="INFO">Process completed.</msg>
+<msg timestamp="20210915 19:06:19.642" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210915 19:06:13.964" endtime="20210915 19:06:19.642"/>
 </kw>
 <kw name="Run Process" library="Process">
 <var>${result}</var>
@@ -37,23 +37,23 @@ ldapdelete -h localhost -p 1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -r d
 <arg>-f</arg>
 <arg>initial-data.ldif</arg>
 <doc>Runs a process and waits for it to complete.</doc>
-<msg timestamp="20210915 18:22:36.413" level="INFO">Starting process:
+<msg timestamp="20210915 19:06:19.643" level="INFO">Starting process:
 ldapadd -h localhost -p 1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -f initial-data.ldif</msg>
-<msg timestamp="20210915 18:22:36.415" level="INFO">Waiting for process to complete.</msg>
-<msg timestamp="20210915 18:22:36.447" level="INFO">Process completed.</msg>
-<msg timestamp="20210915 18:22:36.448" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:36.412" endtime="20210915 18:22:36.448"/>
+<msg timestamp="20210915 19:06:19.647" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210915 19:06:19.678" level="INFO">Process completed.</msg>
+<msg timestamp="20210915 19:06:19.678" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210915 19:06:19.642" endtime="20210915 19:06:19.678"/>
 </kw>
 <kw name="Should Be Equal As Integers" library="BuiltIn">
 <arg>${result.rc}</arg>
 <arg>0</arg>
 <doc>Fails if objects are unequal after converting them to integers.</doc>
-<msg timestamp="20210915 18:22:36.450" level="INFO">Argument types are:
+<msg timestamp="20210915 19:06:19.679" level="INFO">Argument types are:
 &lt;class 'int'&gt;
 &lt;type 'unicode'&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:36.448" endtime="20210915 18:22:36.450"/>
+<status status="PASS" starttime="20210915 19:06:19.678" endtime="20210915 19:06:19.680"/>
 </kw>
-<status status="PASS" starttime="20210915 18:22:30.716" endtime="20210915 18:22:36.451"/>
+<status status="PASS" starttime="20210915 19:06:13.964" endtime="20210915 19:06:19.680"/>
 </kw>
 <test id="s1-t1" name="Load data">
 <kw name="Run Process" library="Process">
@@ -77,30 +77,30 @@ ldapadd -h localhost -p 1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -f init
 <arg>10</arg>
 <arg>stdout=output.txt</arg>
 <doc>Runs a process and waits for it to complete.</doc>
-<msg timestamp="20210915 18:22:36.453" level="INFO">Starting process:
+<msg timestamp="20210915 19:06:19.681" level="INFO">Starting process:
 ldclt -h localhost -p 1389 -w secret -D cn=Manager,dc=minsait,dc=com -e object=person.txt,rdn=cn:Mr[A=INCRNNOLOOP(0;999;3)] -b ou=people,dc=minsait,dc=com -e add,commoncounter -n 10</msg>
-<msg timestamp="20210915 18:22:36.455" level="INFO">Waiting for process to complete.</msg>
-<msg timestamp="20210915 18:22:56.463" level="INFO">Process completed.</msg>
-<msg timestamp="20210915 18:22:56.464" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:36.452" endtime="20210915 18:22:56.464"/>
+<msg timestamp="20210915 19:06:19.682" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210915 19:06:39.689" level="INFO">Process completed.</msg>
+<msg timestamp="20210915 19:06:39.690" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210915 19:06:19.680" endtime="20210915 19:06:39.690"/>
 </kw>
 <kw name="Log" library="BuiltIn">
 <arg>${result.stderr}</arg>
 <arg>console=True</arg>
 <doc>Logs the given message with the given level.</doc>
-<msg timestamp="20210915 18:22:56.467" level="INFO"/>
-<status status="PASS" starttime="20210915 18:22:56.465" endtime="20210915 18:22:56.467"/>
+<msg timestamp="20210915 19:06:39.693" level="INFO"/>
+<status status="PASS" starttime="20210915 19:06:39.690" endtime="20210915 19:06:39.693"/>
 </kw>
 <kw name="Should Be Equal As Integers" library="BuiltIn">
 <arg>${result.rc}</arg>
 <arg>0</arg>
 <doc>Fails if objects are unequal after converting them to integers.</doc>
-<msg timestamp="20210915 18:22:56.469" level="INFO">Argument types are:
+<msg timestamp="20210915 19:06:39.695" level="INFO">Argument types are:
 &lt;class 'int'&gt;
 &lt;type 'unicode'&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:56.468" endtime="20210915 18:22:56.469"/>
+<status status="PASS" starttime="20210915 19:06:39.693" endtime="20210915 19:06:39.695"/>
 </kw>
-<status status="PASS" starttime="20210915 18:22:36.451" endtime="20210915 18:22:56.470"/>
+<status status="PASS" starttime="20210915 19:06:19.680" endtime="20210915 19:06:39.696"/>
 </test>
 <test id="s1-t2" name="Find the last created entry">
 <kw name="Run Process" library="Process">
@@ -118,37 +118,37 @@ ldclt -h localhost -p 1389 -w secret -D cn=Manager,dc=minsait,dc=com -e object=p
 <arg>base</arg>
 <arg>-LLL</arg>
 <doc>Runs a process and waits for it to complete.</doc>
-<msg timestamp="20210915 18:22:56.472" level="INFO">Starting process:
+<msg timestamp="20210915 19:06:39.698" level="INFO">Starting process:
 ldapsearch -H ldap://localhost:1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -b cn=Mr999,ou=people,dc=minsait,dc=com -s base -LLL</msg>
-<msg timestamp="20210915 18:22:56.475" level="INFO">Waiting for process to complete.</msg>
-<msg timestamp="20210915 18:22:56.498" level="INFO">Process completed.</msg>
-<msg timestamp="20210915 18:22:56.499" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:56.472" endtime="20210915 18:22:56.499"/>
+<msg timestamp="20210915 19:06:39.700" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210915 19:06:39.719" level="INFO">Process completed.</msg>
+<msg timestamp="20210915 19:06:39.719" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210915 19:06:39.697" endtime="20210915 19:06:39.720"/>
 </kw>
 <kw name="Log" library="BuiltIn">
 <arg>${result.stderr}</arg>
 <arg>console=True</arg>
 <doc>Logs the given message with the given level.</doc>
-<msg timestamp="20210915 18:22:56.501" level="INFO"/>
-<status status="PASS" starttime="20210915 18:22:56.500" endtime="20210915 18:22:56.501"/>
+<msg timestamp="20210915 19:06:39.721" level="INFO"/>
+<status status="PASS" starttime="20210915 19:06:39.720" endtime="20210915 19:06:39.721"/>
 </kw>
 <kw name="Should Be Equal As Integers" library="BuiltIn">
 <arg>${result.rc}</arg>
 <arg>0</arg>
 <doc>Fails if objects are unequal after converting them to integers.</doc>
-<msg timestamp="20210915 18:22:56.502" level="INFO">Argument types are:
+<msg timestamp="20210915 19:06:39.722" level="INFO">Argument types are:
 &lt;class 'int'&gt;
 &lt;type 'unicode'&gt;</msg>
-<status status="PASS" starttime="20210915 18:22:56.501" endtime="20210915 18:22:56.502"/>
+<status status="PASS" starttime="20210915 19:06:39.721" endtime="20210915 19:06:39.722"/>
 </kw>
-<status status="PASS" starttime="20210915 18:22:56.471" endtime="20210915 18:22:56.502"/>
+<status status="PASS" starttime="20210915 19:06:39.696" endtime="20210915 19:06:39.722"/>
 </test>
 <kw name="Terminate All Processes" library="Process" type="TEARDOWN">
 <arg>kill=True</arg>
 <doc>Terminates all still running processes started by this library.</doc>
-<status status="PASS" starttime="20210915 18:22:56.504" endtime="20210915 18:22:56.504"/>
+<status status="PASS" starttime="20210915 19:06:39.723" endtime="20210915 19:06:39.724"/>
 </kw>
-<status status="PASS" starttime="20210915 18:22:30.693" endtime="20210915 18:22:56.504"/>
+<status status="PASS" starttime="20210915 19:06:13.946" endtime="20210915 19:06:39.724"/>
 </suite>
 <statistics>
 <total>

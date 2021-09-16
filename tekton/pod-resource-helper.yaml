@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: helper-pod
+spec:
+  containers:
+  - image: busybox # alternative: tutum/dnsutils 
+    name: helper 
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: myvolume
+      mountPath: /var/resource
+  volumes:
+  - name: myvolume
+    persistentVolumeClaim:
+      claimName: mypvc

@@ -14,7 +14,10 @@ spec:
     image: python:3.9.7-bullseye
     workingDir: $(workspaces.source.path)
     script: |
+      apt update
       # pip install --upgrade pip
       python3 -m pip install --ignore-installed haikunator requests pyvcloud progressbar pathlib robotframework robotframework-seleniumlibrary robotframework-requests robotframework-SSHLibrary
+      apt install -y ldap-utils
+      apt install -y 389-ds-base
       cd tests
-      robot ldap.robot -d output
+      robot -d output ldap.robot 
