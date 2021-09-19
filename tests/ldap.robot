@@ -7,8 +7,8 @@ Suite Teardown    Terminate All Processes    kill=True
 
 *** Variables ***
 # Requres the initial-data.ldif file in the current directory
-${ldaphost}    localhost 
-${ldapport}    1389
+${ldaphost}    openldapsample-service 
+${ldapport}    389
 ${number_of_clients}    999    
 ${number_of_clients_digits}    3    # 999 has 3 digits
  
