@@ -1,3 +1,4 @@
+# Used for testing
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
@@ -18,5 +19,6 @@ spec:
         curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
         workdir=$(pwd)
         # Taken from the operator makefile, deploy task. Edits the image and deploys the kubernetes artifacts
+        # Replace the image name
         cd $workdir/operator/config/manager && $workdir/kustomize edit set image controller=harbor.jativa:443/francisco/openldapoperator:0.1
         cd $workdir/operator && $workdir/kustomize build config/default | kubectl apply -f -

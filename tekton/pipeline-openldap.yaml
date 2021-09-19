@@ -20,7 +20,7 @@ spec:
     default: "harbor.jativa:443/francisco/openldap:0.1"
   - name: operator-image
     description: URL-TAG of the operator image to generate
-    default: "harbor.jativa:443/francisco/openldapoperator:0.1"
+    default: "harbor.jativa:443/francisco/openldapoperator:0.2"
   - name: go-version
     description: go version to use for operator building
     default: latest
@@ -121,12 +121,18 @@ spec:
 
         workdir=$(pwd)
         # Taken from the operator makefile, deploy task. Edits the image and deploys the kubernetes artifacts
-        cd $workdir/operator/config/manager && $workdir/kustomize edit set image controller=harbor.jativa:443/francisco/openldapoperator:0.1
+        cd $workdir/operator/config/manager && $workdir/kustomize edit set image controller=$(params.operator-image)
         cd $workdir/operator && $workdir/kustomize build config/default | kubectl apply -f -
 
         # Deploy one openldap instance
-        cd $workdir/tekton && kubectl apply -f cr-ldap-sample.yaml
-
+        cat <<EOF | kubectl apply -f -
+        apiVersion: openldap.minsait.com/v1alpha1
+        kind: Openldap
+        metadata:
+          name: openldapsample 
+        spec:
+          size: 1
+          image: $(params.openldap-image)
   - name: tests
     taskRef:
       name: tests
