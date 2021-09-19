@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: openldap-build-deploy
+  name: openldap-cicd
 spec:
   workspaces: 
   - name: repo-credentials
@@ -111,6 +111,8 @@ spec:
     - name: manifest-dir
       workspace: git-source
     params:
+    - name: image
+      value: lachlanevenson/k8s-kubectl # Smaller than the default image
     - name: script 
       value: |
         # Install kustomize standalone, needed for editing the image

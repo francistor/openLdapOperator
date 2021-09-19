@@ -4,4 +4,4 @@ metadata:
   name: openldapsample 
 spec:
   size: 1
-  image: harbor.jativa:443/francisco/myldap:0.2
+  image: harbor.jativa:443/francisco/openldap:0.1
