@@ -17,7 +17,7 @@ spec:
     default: "master"
   - name: openldap-image
     description: URL-TAG of the openldap image to generate
-    default: "harbor.jativa:443/francisco/openldap:0.1"
+    default: "harbor.jativa:443/francisco/openldap:0.2"
   - name: operator-image
     description: URL-TAG of the operator image to generate
     default: "harbor.jativa:443/francisco/openldapoperator:0.2"
@@ -111,8 +111,6 @@ spec:
     - name: manifest-dir
       workspace: git-source
     params:
-    - name: image
-      value: lachlanevenson/k8s-kubectl # Smaller than the default image
     - name: script 
       value: |
         # Install kustomize standalone, needed for editing the image

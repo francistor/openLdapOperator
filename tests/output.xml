@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 4.1.1 (Python 3.6.9 on linux)" generated="20210919 15:31:12.568" rpa="false" schemaversion="2">
+<suite id="s1" name="Ldap" source="/home/francisco/openLdapOperator/tests/ldap.robot">
+<kw name="Initial data" type="SETUP">
+<kw name="Run Process" library="Process">
+<var>${result}</var>
+<arg>ldapadd</arg>
+<arg>-h</arg>
+<arg>${ldaphost}</arg>
+<arg>-p</arg>
+<arg>${ldapport}</arg>
+<arg>-x</arg>
+<arg>-wsecret</arg>
+<arg>-D</arg>
+<arg>cn\=Manager,dc\=minsait,dc\=com</arg>
+<arg>-f</arg>
+<arg>initial-data.ldif</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<msg timestamp="20210919 15:31:12.597" level="INFO">Starting process:
+ldapadd -h localhost -p 1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -f initial-data.ldif</msg>
+<msg timestamp="20210919 15:31:12.599" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210919 15:31:12.632" level="INFO">Process completed.</msg>
+<msg timestamp="20210919 15:31:12.633" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210919 15:31:12.597" endtime="20210919 15:31:12.633"/>
+</kw>
+<kw name="Log" library="BuiltIn">
+<arg>${result.stderr}</arg>
+<arg>console=True</arg>
+<doc>Logs the given message with the given level.</doc>
+<msg timestamp="20210919 15:31:12.636" level="INFO"/>
+<status status="PASS" starttime="20210919 15:31:12.634" endtime="20210919 15:31:12.636"/>
+</kw>
+<kw name="Should Be Equal As Integers" library="BuiltIn">
+<arg>${result.rc}</arg>
+<arg>0</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<msg timestamp="20210919 15:31:12.638" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;type 'unicode'&gt;</msg>
+<status status="PASS" starttime="20210919 15:31:12.636" endtime="20210919 15:31:12.638"/>
+</kw>
+<status status="PASS" starttime="20210919 15:31:12.597" endtime="20210919 15:31:12.639"/>
+</kw>
+<test id="s1-t1" name="Load data">
+<kw name="Run Process" library="Process">
+<var>${result}</var>
+<arg>ldclt</arg>
+<arg>-h</arg>
+<arg>${ldaphost}</arg>
+<arg>-p</arg>
+<arg>${ldapport}</arg>
+<arg>-w</arg>
+<arg>secret</arg>
+<arg>-D</arg>
+<arg>cn\=Manager,dc\=minsait,dc\=com</arg>
+<arg>-e</arg>
+<arg>object\=person.txt,rdn\=cn:Mr[A\=INCRNNOLOOP(0;${number_of_clients};${number_of_clients_digits})]</arg>
+<arg>-b</arg>
+<arg>ou\=people,dc\=minsait,dc\=com</arg>
+<arg>-e</arg>
+<arg>add,commoncounter</arg>
+<arg>-n</arg>
+<arg>10</arg>
+<arg>stdout=output.txt</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<msg timestamp="20210919 15:31:12.642" level="INFO">Starting process:
+ldclt -h localhost -p 1389 -w secret -D cn=Manager,dc=minsait,dc=com -e object=person.txt,rdn=cn:Mr[A=INCRNNOLOOP(0;999;3)] -b ou=people,dc=minsait,dc=com -e add,commoncounter -n 10</msg>
+<msg timestamp="20210919 15:31:12.644" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210919 15:31:32.652" level="INFO">Process completed.</msg>
+<msg timestamp="20210919 15:31:32.653" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210919 15:31:12.640" endtime="20210919 15:31:32.653"/>
+</kw>
+<kw name="Log" library="BuiltIn">
+<arg>${result.stderr}</arg>
+<arg>console=True</arg>
+<doc>Logs the given message with the given level.</doc>
+<msg timestamp="20210919 15:31:32.655" level="INFO"/>
+<status status="PASS" starttime="20210919 15:31:32.653" endtime="20210919 15:31:32.655"/>
+</kw>
+<kw name="Should Be Equal As Integers" library="BuiltIn">
+<arg>${result.rc}</arg>
+<arg>0</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<msg timestamp="20210919 15:31:32.656" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;type 'unicode'&gt;</msg>
+<status status="PASS" starttime="20210919 15:31:32.655" endtime="20210919 15:31:32.656"/>
+</kw>
+<status status="PASS" starttime="20210919 15:31:12.639" endtime="20210919 15:31:32.656"/>
+</test>
+<test id="s1-t2" name="Find the last created entry">
+<kw name="Run Process" library="Process">
+<var>${result}</var>
+<arg>ldapsearch</arg>
+<arg>-H</arg>
+<arg>ldap://${ldaphost}:${ldapport}</arg>
+<arg>-x</arg>
+<arg>-wsecret</arg>
+<arg>-D</arg>
+<arg>cn\=Manager,dc\=minsait,dc\=com</arg>
+<arg>-b</arg>
+<arg>cn\=Mr${number_of_clients},ou\=people,dc\=minsait,dc\=com</arg>
+<arg>-s</arg>
+<arg>base</arg>
+<arg>-LLL</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<msg timestamp="20210919 15:31:32.659" level="INFO">Starting process:
+ldapsearch -H ldap://localhost:1389 -x -wsecret -D cn=Manager,dc=minsait,dc=com -b cn=Mr999,ou=people,dc=minsait,dc=com -s base -LLL</msg>
+<msg timestamp="20210919 15:31:32.661" level="INFO">Waiting for process to complete.</msg>
+<msg timestamp="20210919 15:31:32.675" level="INFO">Process completed.</msg>
+<msg timestamp="20210919 15:31:32.676" level="INFO">${result} = &lt;result object with rc 0&gt;</msg>
+<status status="PASS" starttime="20210919 15:31:32.658" endtime="20210919 15:31:32.676"/>
+</kw>
+<kw name="Log" library="BuiltIn">
+<arg>${result.stderr}</arg>
+<arg>console=True</arg>
+<doc>Logs the given message with the given level.</doc>
+<msg timestamp="20210919 15:31:32.678" level="INFO"/>
+<status status="PASS" starttime="20210919 15:31:32.676" endtime="20210919 15:31:32.678"/>
+</kw>
+<kw name="Should Be Equal As Integers" library="BuiltIn">
+<arg>${result.rc}</arg>
+<arg>0</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<msg timestamp="20210919 15:31:32.679" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;type 'unicode'&gt;</msg>
+<status status="PASS" starttime="20210919 15:31:32.678" endtime="20210919 15:31:32.679"/>
+</kw>
+<status status="PASS" starttime="20210919 15:31:32.657" endtime="20210919 15:31:32.680"/>
+</test>
+<kw name="Terminate All Processes" library="Process" type="TEARDOWN">
+<arg>kill=True</arg>
+<doc>Terminates all still running processes started by this library.</doc>
+<status status="PASS" starttime="20210919 15:31:32.681" endtime="20210919 15:31:32.681"/>
+</kw>
+<status status="PASS" starttime="20210919 15:31:12.569" endtime="20210919 15:31:32.681"/>
+</suite>
+<statistics>
+<total>
+<stat pass="2" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="2" fail="0" skip="0" id="s1" name="Ldap">Ldap</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
