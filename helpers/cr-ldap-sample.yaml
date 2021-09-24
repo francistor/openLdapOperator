@@ -1,0 +1,9 @@
+apiVersion: openldap.minsait.com/v1alpha1
+kind: Openldap
+metadata:
+  name: sample 
+spec:
+  image: harbor.jativa:443/francisco/openldap:0.1
+  storage-size: 1Gi
+  dispose-pvc: true
+  loadbalancer-ip-address: 192.168.122.210

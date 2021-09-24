@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: openldap-sample 
+  labels:
+    app: openldap
+    openldap: sample
+spec:
+  containers:
+  - image: harbor.jativa:443/francisco/openldap:0.3
+    name: openldap 
+    command: ["/usr/local/libexec/slapd", "-F", "/usr/local/etc/openldap/slapd.d", "-h", "ldap:/// ldapi:///", "-d", "stats"]
+    volumeMounts:
+    - name: ldap-database-volume 
+      mountPath: /usr/local/var/openldap-data
+  volumes:
+  - name: ldap-database-volume
+    persistentVolumeClaim:
+      claimName: openldap-sample 

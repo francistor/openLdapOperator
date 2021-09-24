@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,12 +28,17 @@ import (
 type OpenldapSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
-	//+kubebuilder:validation:Minimuim=0
-	// Number of ldap nodes to deploy
-	Size int32 `json:"size"`
-
 	// Image to use
 	Image string `json:"image"`
+
+	// Size of the database storage in GB
+	StorageSize resource.Quantity `json:"storage-size"`
+
+	// Whether to delete the pvc
+	DisposePVC bool `json:"dispose-pvc"`
+
+	// +kubebuilder:validation:Pattern:=`^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`
+	LoadBalancerIPAddress string `json:"loadbalancer-ip-address"`
 }
 
 // OpenldapStatus defines the observed state of Openldap

@@ -83,7 +83,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Openldap")
+		setupLog.Error(err, "Unable to create controller", "controller", "Openldap")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
@@ -97,7 +97,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager. Version with Service")
+	setupLog.Info("starting manager. Version sept 23 ")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

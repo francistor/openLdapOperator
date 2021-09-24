@@ -22,6 +22,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -43,9 +44,9 @@ type OpenldapReconciler struct {
 //+kubebuilder:rbac:groups=openldap.minsait.com,resources=openldaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=openldap.minsait.com,resources=openldaps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=openldap.minsait.com,resources=openldaps/finalizers,verbs=update
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pvcs,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -76,7 +77,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// Create PVC if it does not exit
 	existingPVC := &corev1.PersistentVolumeClaim{}
-	err := r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingPVC)
+	err := r.Get(ctx, types.NamespacedName{Name: openldap.Name + "-storage", Namespace: openldap.Namespace}, existingPVC)
 	if err != nil && errors.IsNotFound(err) {
 		pvc := r.pvcForOpenLdap(openldap)
 		log.Info("About to create a PVC for Openldap")
@@ -87,20 +88,21 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// PVC created. Return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get PVC")
+		log.Error(err, "Failed to get Pod")
 		return ctrl.Result{}, err
 	} else {
-		// Check sizeRequests
-		if existingPVC.Spec.Resources.Requests["storage"] != openldap.Spec.StorageSize {
-			log.Error(err, "Existing PVC size does not match the requested one")
-			log.Info(fmt.Sprintf("#%v, #%v", existingPVC.Spec.Resources.Requests["storage"], openldap.Spec.StorageSize))
+		// Check size
+		if !reflect.DeepEqual(existingPVC.Spec.Resources.Requests, corev1.ResourceList{
+			"storage": *resource.NewQuantity(int64(openldap.Spec.StorageSizeGB)*1000*1000*1000, resource.DecimalSI),
+		}) {
+			log.Error(err, "Requested size does not match that of the existing pvc")
 			return ctrl.Result{}, err
 		}
 	}
 
 	// Create Pod if it does not exist
 	existingPod := &corev1.Pod{}
-	err = r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingPod)
+	err = r.Get(ctx, types.NamespacedName{Name: openldap.Name, Namespace: openldap.Namespace}, existingPod)
 	if err != nil && errors.IsNotFound(err) {
 		pod := r.podForOpenldap(openldap)
 		log.Info("About to create a Pod for Openldap")
@@ -117,7 +119,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// Create service if it does not exist
 	existingService := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingService)
+	err = r.Get(ctx, types.NamespacedName{Name: openldap.Name + "-service", Namespace: openldap.Namespace}, existingService)
 	if err != nil && errors.IsNotFound(err) {
 		// Create the service
 		service := r.serviceForOpenldap(openldap)
@@ -174,13 +176,13 @@ func (r *OpenldapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *OpenldapReconciler) podForOpenldap(openldap *openldapv1alpha1.Openldap) *corev1.Pod {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "openldap-" + openldap.Name,
+			Name:      openldap.Name,
 			Namespace: openldap.Namespace,
-			Labels:    map[string]string{"app": "openldap", "openldap": openldap.Name},
+			Labels:    map[string]string{"app": "openldap"},
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:    "openldap-" + openldap.Name,
+				Name:    openldap.Name,
 				Image:   openldap.Spec.Image,
 				Command: []string{"/usr/local/libexec/slapd", "-F", "/usr/local/etc/openldap/slapd.d", "-h", "ldap:/// ldapi:///", "-d", "stats"},
 				VolumeMounts: []corev1.VolumeMount{{
@@ -192,7 +194,7 @@ func (r *OpenldapReconciler) podForOpenldap(openldap *openldapv1alpha1.Openldap)
 				Name: "ldap-database-volume",
 				VolumeSource: corev1.VolumeSource{
 					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: "openldap-" + openldap.Name,
+						ClaimName: openldap.Name + "-storage",
 					},
 				},
 			}},
@@ -206,14 +208,14 @@ func (r *OpenldapReconciler) podForOpenldap(openldap *openldapv1alpha1.Openldap)
 func (r *OpenldapReconciler) pvcForOpenLdap(openldap *openldapv1alpha1.Openldap) *corev1.PersistentVolumeClaim {
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "openldap-" + openldap.Name,
+			Name:      openldap.Name + "-storage",
 			Namespace: openldap.Namespace,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{"ReadWriteOnce"},
+			AccessModes: []corev1.PersistentVolumeAccessMode{"readWriteOnce"},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					"storage": openldap.Spec.StorageSize,
+					"storage": *resource.NewQuantity(int64(openldap.Spec.StorageSizeGB)*1000*1000*1000, resource.DecimalSI),
 				},
 			},
 		},
@@ -225,31 +227,4 @@ func (r *OpenldapReconciler) pvcForOpenLdap(openldap *openldapv1alpha1.Openldap)
 	}
 
 	return pvc
-}
-
-// Creates the load balancer service
-func (r *OpenldapReconciler) serviceForOpenldap(openldap *openldapv1alpha1.Openldap) *corev1.Service {
-	labels := map[string]string{"openldap": openldap.Name}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "openldap-" + openldap.Name,
-			Namespace: openldap.Namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: labels,
-			Ports: []corev1.ServicePort{{
-				Name:     "ldap",
-				Protocol: "TCP",
-				Port:     389,
-			}},
-			Type: "LoadBalancer",
-		},
-	}
-
-	if openldap.Spec.LoadBalancerIPAddress != "" {
-		service.Spec.LoadBalancerIP = openldap.Spec.LoadBalancerIPAddress
-	}
-
-	ctrl.SetControllerReference(openldap, service, r.Scheme)
-	return service
 }
