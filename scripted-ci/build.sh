@@ -3,7 +3,7 @@
 # Dependencies
 # kubectl sudo snap install kubectl. Clpy kubectl file
 # kustomize curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-# Golang curl -L -o go.tar.tgz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf /home/francisco/go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment
+# Golang curl -L -o go.tar.gz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf /home/francisco/go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment
 # Docker sudo apt install docker.io
 # pip sudo apt install python3-venv python3-pip
 
