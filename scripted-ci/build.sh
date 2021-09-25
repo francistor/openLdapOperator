@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # Dependencies
-# kubectl sudo snap install kubectl
+# kubectl sudo snap install kubectl. Clpy kubectl file
 # kustomize curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
 # Golang curl -L -o go.tar.tgz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf /home/francisco/go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment
 # Docker sudo apt install docker.io
 # pip sudo apt install python3-venv python3-pip
 
-OPENLDAP_IMAGE=harbor.jativa:443/francisco/openldap:0.3
-CONTROLLER_IMAGE=harbor.jativa:443/francisco/openldapoperator:0.3
+export OPENLDAP_IMAGE=harbor.jativa:443/francisco/openldap:0.3
+export CONTROLLER_IMAGE=harbor.jativa:443/francisco/openldapoperator:0.3
+export LOADBALANCER_IP_ADDRESS=192.168.122.210
 
 # Build the Docker Image locally. The last parameter is the context
 sudo docker build -f ../docker/dockerfile -t $OPENLDAP_IMAGE ../docker
@@ -34,8 +35,11 @@ kind: Openldap
 metadata:
     name: openldapsample 
 spec:
-    size: 1
     image: $OPENLDAP_IMAGE
+    storage-size: 1Gi
+    dispose-pvc: true
+    loadbalancer-ip-address: $LOADBALANCER_IP_ADDRESS
+
 EOF
 
 # Test
