@@ -17,4 +17,4 @@ COPY slapd.conf /usr/local/etc/openldap/slapd.conf
 RUN mkdir -p /usr/local/etc/openldap/slapd.d && mkdir -p /usr/local/var/openldap-data && slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d
 
 # Install go
-RUN curl -L -o go.tar.tgz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf /home/francisco/go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment
+RUN curl -L -o go.tar.tgz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment

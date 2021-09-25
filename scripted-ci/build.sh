@@ -7,12 +7,17 @@
 # Docker sudo apt install docker.io
 # pip sudo apt install python3-venv python3-pip
 
+# This one will make the script to exit in case of error in any command
+set -e
+
 export OPENLDAP_IMAGE=harbor.jativa:443/francisco/openldap:0.3
 export CONTROLLER_IMAGE=harbor.jativa:443/francisco/openldapoperator:0.3
 export LOADBALANCER_IP_ADDRESS=192.168.122.210
 
 # Build the Docker Image locally. The last parameter is the context
 sudo docker build -f ../docker/dockerfile -t $OPENLDAP_IMAGE ../docker
+
+# if [[ $? -ne 0 ]]; then echo "Docker build for openldap failed"; exit; fi
 
 # Push to the registry
 # Default harbor login admin:Harbor12345
@@ -43,7 +48,7 @@ spec:
 EOF
 
 # Test
-apt update
+sudo apt update
 
 # Upgrade pip
 sudo -H pip3 install --upgrade pip
