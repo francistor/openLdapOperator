@@ -39,6 +39,9 @@ type OpenldapSpec struct {
 
 	// +kubebuilder:validation:Pattern:=`^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`
 	LoadBalancerIPAddress string `json:"loadbalancer-ip-address"`
+
+	// Stores the openldap configuration
+	Config string `json:"config"`
 }
 
 // OpenldapStatus defines the observed state of Openldap

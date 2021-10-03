@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"reflect"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -46,6 +47,7 @@ type OpenldapReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pvcs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -74,9 +76,40 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
+	// Create or update the Configmap with LDAP configuration
+	existingConfigMap := &corev1.ConfigMap{}
+	err := r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingConfigMap)
+	if err != nil && errors.IsNotFound(err) {
+		configMap := r.configMapForOpenldap((openldap))
+		log.Info("About to create ConfigMap for Openldap")
+		if err := r.Create(ctx, configMap); err != nil {
+			log.Error(err, "Error creating Configmap")
+			return ctrl.Result{}, err
+		}
+		// Configmap creted. Return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Configmap")
+		return ctrl.Result{}, err
+	} else {
+		// Update configuration if it has changed in CR
+		if existingConfigMap.Data["config"] != openldap.Spec.Config {
+			existingConfigMap.Data["config"] = openldap.Spec.Config
+			log.Info("About to change configmap")
+			log.Info(existingConfigMap.Data["config"])
+			err := r.Update(ctx, existingConfigMap)
+			// TODO: Force update of configuration, since configmap contents will not be applied as configuration in the Openldap image
+			if err != nil {
+				log.Error(err, "Could not update configuration")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+	}
+
 	// Create PVC if it does not exit
 	existingPVC := &corev1.PersistentVolumeClaim{}
-	err := r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingPVC)
+	err = r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingPVC)
 	if err != nil && errors.IsNotFound(err) {
 		pvc := r.pvcForOpenLdap(openldap)
 		log.Info("About to create a PVC for Openldap")
@@ -138,7 +171,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	podList := &corev1.PodList{}
 	listOpts := []client.ListOption{
 		client.InNamespace(openldap.Namespace),
-		client.MatchingLabels(map[string]string{"app": "openldap", "openldap_cr": openldap.Name}),
+		client.MatchingLabels(map[string]string{"app": "openldap", "openldap": openldap.Name}),
 	}
 	if err := r.List(ctx, podList, listOpts...); err != nil {
 		log.Error(err, "Failed listing pods", "Deployment.Namespace:", openldap.Namespace, "Deployment.Name", openldap.Name)
@@ -168,6 +201,21 @@ func (r *OpenldapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&openldapv1alpha1.Openldap{}).
 		Owns(&corev1.Pod{}).Owns(&corev1.Service{}).Owns(&corev1.PersistentVolumeClaim{}).
 		Complete(r)
+}
+
+// Creates the configmap
+func (r *OpenldapReconciler) configMapForOpenldap(openldap *openldapv1alpha1.Openldap) *corev1.ConfigMap {
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "openldap-" + openldap.Name,
+			Namespace: openldap.Namespace,
+		},
+		Data: map[string]string{
+			"config": openldap.Spec.Config,
+		},
+	}
+	ctrl.SetControllerReference(openldap, configMap, r.Scheme)
+	return configMap
 }
 
 // Creates the ldap pod

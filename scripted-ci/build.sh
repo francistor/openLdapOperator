@@ -22,7 +22,7 @@ sudo docker build -f ../docker/dockerfile -t $OPENLDAP_IMAGE ../docker
 # Push to the registry
 # Default harbor login admin:Harbor12345
 # If getting unknown certificate authority, copy the CA.crt to /etc/docker/certs.d/<repo-name> and systemctl restart docker
-docker push $OPENLDAP_IMAGE
+sudo docker push $OPENLDAP_IMAGE
 
 # Build operator
 pushd ../operator
