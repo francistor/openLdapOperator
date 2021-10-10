@@ -7,13 +7,19 @@ metadata:
     openldap: sample
 spec:
   containers:
-  - image: harbor.jativa:443/francisco/openldap:0.3
+  - image: harbor.jativa:443/francisco/openldap:latest
     name: openldap 
-    command: ["/usr/local/libexec/slapd", "-F", "/usr/local/etc/openldap/slapd.d", "-h", "ldap:/// ldapi:///", "-d", "stats"]
+    command: ["/bin/sh", "-c", "slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d && /usr/local/libexec/slapd -F /usr/local/etc/openldap/slapd.d -h \"ldap:/// ldapi:///\" -d stats"]
     volumeMounts:
     - name: ldap-database-volume 
       mountPath: /usr/local/var/openldap-data
+    - name: ldap-config
+      mountPath: /usr/local/etc/openldap/slapd.conf
+      subPath: slapd.conf
   volumes:
   - name: ldap-database-volume
     persistentVolumeClaim:
-      claimName: openldap-sample 
+      claimName: openldap-sample
+  - name: ldap-config
+    configMap:
+      name: openldap-sample 

@@ -46,7 +46,7 @@ type OpenldapReconciler struct {
 //+kubebuilder:rbac:groups=openldap.minsait.com,resources=openldaps/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pvcs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -96,7 +96,6 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		if existingConfigMap.Data["config"] != openldap.Spec.Config {
 			existingConfigMap.Data["config"] = openldap.Spec.Config
 			log.Info("About to change configmap")
-			log.Info(existingConfigMap.Data["config"])
 			err := r.Update(ctx, existingConfigMap)
 			// TODO: Force update of configuration, since configmap contents will not be applied as configuration in the Openldap image
 			if err != nil {
@@ -174,7 +173,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		client.MatchingLabels(map[string]string{"app": "openldap", "openldap": openldap.Name}),
 	}
 	if err := r.List(ctx, podList, listOpts...); err != nil {
-		log.Error(err, "Failed listing pods", "Deployment.Namespace:", openldap.Namespace, "Deployment.Name", openldap.Name)
+		log.Error(err, "Failed listing pods", "Namespace:", openldap.Namespace, "Name", openldap.Name)
 		return ctrl.Result{}, err
 	}
 	var podNames []string
@@ -186,7 +185,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if !reflect.DeepEqual(openldap.Status.Nodes, podNames) {
 		openldap.Status.Nodes = podNames
 		if err := r.Status().Update(ctx, openldap); err != nil {
-			log.Error(err, "Could not update status", "Deployment.Namespace:", openldap.Namespace, "Deployment.Name", openldap.Name)
+			log.Error(err, "Could not update status", "Namespace:", openldap.Namespace, "Name", openldap.Name)
 			return ctrl.Result{}, err
 		}
 
@@ -211,7 +210,7 @@ func (r *OpenldapReconciler) configMapForOpenldap(openldap *openldapv1alpha1.Ope
 			Namespace: openldap.Namespace,
 		},
 		Data: map[string]string{
-			"config": openldap.Spec.Config,
+			"slapd.conf": openldap.Spec.Config,
 		},
 	}
 	ctrl.SetControllerReference(openldap, configMap, r.Scheme)
@@ -228,22 +227,45 @@ func (r *OpenldapReconciler) podForOpenldap(openldap *openldapv1alpha1.Openldap)
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:    "openldap-" + openldap.Name,
-				Image:   openldap.Spec.Image,
-				Command: []string{"/usr/local/libexec/slapd", "-F", "/usr/local/etc/openldap/slapd.d", "-h", "ldap:/// ldapi:///", "-d", "stats"},
-				VolumeMounts: []corev1.VolumeMount{{
-					Name:      "ldap-database-volume",
-					MountPath: "/usr/local/var/openldap-data",
-				}},
-			}},
-			Volumes: []corev1.Volume{{
-				Name: "ldap-database-volume",
-				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: "openldap-" + openldap.Name,
+				Name:  "openldap-" + openldap.Name,
+				Image: openldap.Spec.Image,
+				Command: []string{
+					"/bin/sh",
+					"-c",
+					"slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d && /usr/local/libexec/slapd -F /usr/local/etc/openldap/slapd.d -h \"ldap:/// ldapi:///\" -d stats",
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "ldap-database-volume",
+						MountPath: "/usr/local/var/openldap-data",
+					},
+					{
+						Name:      "ldap-config",
+						MountPath: "/usr/local/etc/openldap/slapd.conf",
+						SubPath:   "slapd.conf",
 					},
 				},
 			}},
+			Volumes: []corev1.Volume{
+				{
+					Name: "ldap-database-volume",
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: "openldap-" + openldap.Name,
+						},
+					},
+				},
+				{
+					Name: "ldap-config",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "openldap-" + openldap.Name,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	ctrl.SetControllerReference(openldap, pod, r.Scheme)

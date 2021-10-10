@@ -3,12 +3,12 @@ kind: Openldap
 metadata:
   name: sample 
 spec:
-  image: harbor.jativa:443/francisco/openldap:0.1
+  image: harbor.jativa:443/francisco/openldap:latest
   storage-size: 1Gi
   dispose-pvc: true
   loadbalancer-ip-address: 192.168.122.210
   config: |
-    # Initial configuration
+    # Configuration from Custom Resource Definition
     # This file should NOT be world readable.
     #
     include		/usr/local/etc/openldap/schema/core.schema
@@ -64,7 +64,7 @@ spec:
     # rootdn so that temporary modifications to the configuration can be made
     # while slapd is running. They will not persist across a restart.
     rootdn "cn=admin,cn=config"
-    rootpw secret
+    rootpw secretcr
 
     #######################################################################
     # MDB database definitions
@@ -77,7 +77,7 @@ spec:
     # Cleartext passwords, especially for the rootdn, should
     # be avoid.  See slappasswd(8) and slapd.conf(5) for details.
     # Use of strong authentication encouraged.
-    rootpw		secret
+    rootpw		secretcr
     # The database directory MUST exist prior to running slapd AND 
     # should only be accessible by the slapd and slap tools.
     # Mode 700 recommended.

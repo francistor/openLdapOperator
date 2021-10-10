@@ -3,7 +3,8 @@ kind: ConfigMap
 metadata:
   name: openldap-sample
 data:
-  config: |
+  slapd.conf: |
+    # Created from configmap
     # Spd.conf(5) for details on configuration options.
     # This file should NOT be world readable.
     #

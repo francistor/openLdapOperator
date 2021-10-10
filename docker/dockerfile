@@ -3,8 +3,13 @@ FROM ubuntu
 # To avoid user interaction
 ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
+
 # Install dependencies
 RUN apt-get update && apt-get install -y groff-base && apt-get install -y build-essential && apt-get install -y libssl-dev && apt-get install -y libsasl2-dev && apt-get install -y libltdl-dev && apt-get install -y curl
+
+# Install go
+RUN curl -L -o go.tar.gz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment
+
 # Download from Openldap repository
 RUN curl -o openldap.tgz https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.5.5.tgz
 RUN gunzip -c openldap.tgz | tar xvfB -
@@ -14,7 +19,6 @@ RUN rm openldap.tgz && cd openldap-2.5.5 && ./configure --enable-accesslog=yes -
 COPY slapd.conf /usr/local/etc/openldap/slapd.conf
 # Create directories and convert from file-based to dynamic configuration
 # slaptest -n 0 for testing only the configuration database. Otherwise tries to open and throws error
-RUN mkdir -p /usr/local/etc/openldap/slapd.d && mkdir -p /usr/local/var/openldap-data && slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d
+RUN mkdir -p /usr/local/etc/openldap/slapd.d && mkdir -p /usr/local/var/openldap-data
 
-# Install go
-RUN curl -L -o go.tar.gz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz && tar -C /usr/local -xzf go.tar.gz && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/environment
+# RUN slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d
