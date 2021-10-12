@@ -297,5 +297,4 @@ func TestLdifCompare(t *testing.T) {
 	if !strings.Contains(ldapModify, "dn: olcDatabase={2}monitor,cn=config\nchangetype: delete") {
 		t.Fatal("Missing", "dn: olcDatabase={2}monitor,cn=config\nchangetype: delete")
 	}
-
 }

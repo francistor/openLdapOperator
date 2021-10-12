@@ -37,7 +37,7 @@ func (e ldapEntry) serialize() string {
 	return e.serializeDN() + e.serializeAttributes()
 }
 
-// Gets the ldapentry attributes, as a string, sorted
+// Gets the ldapentry attributes, as a string slice, sorted
 func (e ldapEntry) getSortedAttributes() []string {
 	attributesAsStrings := make([]string, 0)
 	for k, vv := range e.attributes {
@@ -53,7 +53,7 @@ func (e ldapEntry) getSortedAttributes() []string {
 /////////////////////////////////////////////////////
 type ldapEntryList []ldapEntry
 
-// Methods of the Interface interface for sorting
+// Methods of the Interface interface for sorting based on dn
 func (l ldapEntryList) Len() int {
 	return len(l)
 }
@@ -66,12 +66,30 @@ func (l ldapEntryList) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
+// Helper implementing the stringer interface
+func (l ldapEntryList) String() string {
+	var builder strings.Builder
+	for _, entry := range l {
+		builder.WriteString(fmt.Sprintf("dn: %s\n", entry.dn))
+		for _, nv := range entry.getSortedAttributes() {
+			builder.WriteString(fmt.Sprintln(nv))
+		}
+		builder.WriteString("\n")
+	}
+	return builder.String()
+}
+
 // ---------------------- End types
 
 var currentConfigFilePtr = flag.String("current", "", "File with current configuration. Mandatory")
 var newConfigFilePtr = flag.String("new", "", "File with configuration to apply. Mandatory")
+var isDebug = flag.Bool("debug", false, "Writes tracing information in stdout")
 var help = flag.Bool("help", false, "Shows help")
 
+/*
+Takes as an input two files with ldif format (current and new), compares them and generates as
+standard output the commands to use in ldapmodify to change from current to new.
+*/
 func main() {
 
 	// Treat command line parameters
@@ -79,9 +97,8 @@ func main() {
 
 	if *help == true {
 		fmt.Println("ldifCompare: Generates a ldapmodify file from moving from current to new configuration")
-		format := "\t-%s: %s\n"
 		flag.VisitAll(func(flag *flag.Flag) {
-			fmt.Printf(format, flag.Name, flag.Usage)
+			fmt.Printf("\t-%s: %s\n", flag.Name, flag.Usage)
 		})
 		return
 	}
@@ -115,28 +132,18 @@ func main() {
 	newLdapEntries := parseLdif(string(newFileBytes))
 
 	// For debugging. Print contents of current file
-	for _, entry := range currentLdapEntries {
-		fmt.Printf("dn: %s\n", entry.dn)
-		for _, nv := range entry.getSortedAttributes() {
-			fmt.Println(nv)
-		}
-		fmt.Println()
-	}
-
-	fmt.Println("+++++++++++++++++++++++++++++++++")
-
-	// For debugging. Print contents of new file
-	for _, entry := range newLdapEntries {
-		fmt.Printf("dn: %s\n", entry.dn)
-		for _, nv := range entry.getSortedAttributes() {
-			fmt.Printf(nv)
-		}
-		fmt.Println()
+	if *isDebug {
+		fmt.Println("==== Current ==========================================")
+		fmt.Println(currentLdapEntries)
+		fmt.Print("=======================================================\n\n")
+		fmt.Println("==== New  =============================================")
+		fmt.Println(newLdapEntries)
+		fmt.Print("=======================================================\n\n")
 	}
 }
 
 // Helper function to read a config file and generate an ldapEntryList
-// The results are ordered, by dn and also inside each entry, by attribute
+// The results are ordered by dn and also inside each entry, by attribute
 func parseLdif(ldif string) ldapEntryList {
 
 	lineScanner := bufio.NewScanner(strings.NewReader(ldif))
@@ -169,7 +176,7 @@ func parseLdif(ldif string) ldapEntryList {
 		}
 
 		// Regular line. Append to current
-		// Create entry if was not existing yet
+		// Create entry if it was not existing yet
 		if currentLdapEntry == nil {
 			currentLdapEntry = &ldapEntry{
 				attributes: make(map[string][]string),
@@ -206,11 +213,14 @@ func parseLdif(ldif string) ldapEntryList {
 		}
 	}
 
-	// Treat the possibly last value
+	// Treat the possibly last entry
 	if currentLdapEntry != nil {
-		// Add entry only if dn is not empty. Otherwise ignore
+		// Add entry only if dn is not empty. Otherwise error
 		if currentLdapEntry.dn != "" {
 			ldapEntries = append(ldapEntries, *currentLdapEntry)
+		} else {
+			fmt.Println("[ERROR] Last entry is lackng dn ", currentLdapEntry)
+			os.Exit(1)
 		}
 	}
 
@@ -227,6 +237,7 @@ func compareLdif(targetLdif ldapEntryList, currentLdif ldapEntryList) string {
 
 	var builder strings.Builder
 
+	// Target & Current are ldapentries(dn + attributes)
 	// Target exists
 	//	Current exists
 	//	  compare entries
