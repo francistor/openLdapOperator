@@ -111,7 +111,7 @@ olcDatabase: {2}monitor
 olcAddContentAcl: FALSE
 olcLastMod: TRUE
 olcLastBind: TRUE
-olcMaxDerefDepth: 15
+olcMaxDerefDepth: 14
 olcReadOnly: FALSE
 olcSyncUseSubentry: FALSE
 olcMonitoring: FALSE

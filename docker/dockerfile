@@ -16,9 +16,16 @@ RUN gunzip -c openldap.tgz | tar xvfB -
 # Install openldap
 RUN rm openldap.tgz && cd openldap-2.5.5 && ./configure --enable-accesslog=yes --with-cyrus-sasl=yes --enable-ppolicy=yes --enable-auditlog=yes && make depend && make && make install
 # Copy initial configuration file, with permisions to read/modify configuration
-COPY slapd.conf /usr/local/etc/openldap/slapd.conf
+COPY docker/slapd.conf /usr/local/etc/openldap/slapd.conf
 # Create directories and convert from file-based to dynamic configuration
 # slaptest -n 0 for testing only the configuration database. Otherwise tries to open and throws error
 RUN mkdir -p /usr/local/etc/openldap/slapd.d && mkdir -p /usr/local/var/openldap-data
 
 # RUN slaptest -n 0 -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d
+
+# Install ldifCompare
+RUN mkdir -p /ldifCompare/bin
+COPY ldifCompare/ldifcompare.go /ldifCompare
+COPY ldifCompare/go.mod /ldifCompare
+COPY ldifCompare/bin/updateLdapConfig.sh /ldifCompare/bin
+RUN cd /ldifCompare && /usr/local/go/bin/go build

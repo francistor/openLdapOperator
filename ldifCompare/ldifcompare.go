@@ -82,7 +82,7 @@ func (l ldapEntryList) String() string {
 // ---------------------- End types
 
 var currentConfigFilePtr = flag.String("current", "", "File with current configuration. Mandatory")
-var newConfigFilePtr = flag.String("new", "", "File with configuration to apply. Mandatory")
+var newConfigFilePtr = flag.String("new", "", "File with configuration to apply. If not specified, new config is read from standard input")
 var isDebug = flag.Bool("debug", false, "Writes tracing information in stdout")
 var help = flag.Bool("help", false, "Shows help")
 
@@ -108,21 +108,28 @@ func main() {
 		return
 	}
 
-	if *newConfigFilePtr == "" {
-		fmt.Println("[ERROR] new config file not specified")
-		return
-	}
-
-	// Read input files
+	// Read input file with current configuration
 	currentFileBytes, e := ioutil.ReadFile(*currentConfigFilePtr)
 	if e != nil {
 		fmt.Println("[ERROR] Could not read input file ", *currentConfigFilePtr)
 		os.Exit(1)
 	}
-	newFileBytes, e := ioutil.ReadFile(*currentConfigFilePtr)
-	if e != nil {
-		fmt.Println("[ERROR] Could not read input file ", *currentConfigFilePtr)
-		os.Exit(1)
+
+	// Read new configuration, from file or from standard input
+	var newFileBytes []byte
+	if *newConfigFilePtr == "" {
+		// Read from standard input
+		newFileBytes, e = ioutil.ReadAll(os.Stdin)
+		if e != nil {
+			fmt.Println("[ERROR] Error Reading input: ", e.Error())
+			os.Exit(1)
+		}
+	} else {
+		newFileBytes, e = ioutil.ReadFile(*newConfigFilePtr)
+		if e != nil {
+			fmt.Println("[ERROR] Could not read input file ", *newConfigFilePtr)
+			os.Exit(1)
+		}
 	}
 
 	// Read input ldiff
@@ -140,9 +147,11 @@ func main() {
 		fmt.Println(newLdapEntries)
 		fmt.Print("=======================================================\n\n")
 	}
+
+	fmt.Println(compareLdif(newLdapEntries, currentLdapEntries))
 }
 
-// Helper function to read a config file and generate an ldapEntryList
+// Helper function to read a ldif file and generate an ldapEntryList
 // The results are ordered by dn and also inside each entry, by attribute
 func parseLdif(ldif string) ldapEntryList {
 
@@ -215,12 +224,9 @@ func parseLdif(ldif string) ldapEntryList {
 
 	// Treat the possibly last entry
 	if currentLdapEntry != nil {
-		// Add entry only if dn is not empty. Otherwise error
+		// Add entry only if dn is not empty. Otherwise ignore
 		if currentLdapEntry.dn != "" {
 			ldapEntries = append(ldapEntries, *currentLdapEntry)
-		} else {
-			fmt.Println("[ERROR] Last entry is lackng dn ", currentLdapEntry)
-			os.Exit(1)
 		}
 	}
 
@@ -330,7 +336,9 @@ func compareEntry(targetEntry ldapEntry, currentEntry ldapEntry) string {
 
 		switch operation {
 		case "add":
-			builder.WriteString("-\n")
+			if !isEmpty {
+				builder.WriteString("-\n")
+			}
 			builder.WriteString(fmt.Sprintf("add: %s\n", getAttributeName(targetAttributes[targetPos])))
 			builder.WriteString(targetAttributes[targetPos])
 			builder.WriteString("\n")
@@ -340,7 +348,9 @@ func compareEntry(targetEntry ldapEntry, currentEntry ldapEntry) string {
 			currentPos++
 			targetPos++
 		case "delete":
-			builder.WriteString("-\n")
+			if !isEmpty {
+				builder.WriteString("-\n")
+			}
 			builder.WriteString(fmt.Sprintf("delete: %s\n", getAttributeName(currentAttributes[currentPos])))
 			builder.WriteString(currentAttributes[currentPos])
 			builder.WriteString("\n")

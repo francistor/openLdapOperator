@@ -11,7 +11,7 @@ import (
 )
 
 // https://www.youtube.com/watch?v=jiKwjnlc7Wk
-func main() {
+func main2() {
 	rules := clientcmd.NewDefaultClientConfigLoadingRules()
 	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
 	config, err := kubeconfig.ClientConfig()

@@ -15,7 +15,7 @@ export CONTROLLER_IMAGE=harbor.jativa:443/francisco/openldapoperator:latest
 export LOADBALANCER_IP_ADDRESS=192.168.122.210
 
 # Build the Docker Image locally. The last parameter is the context
-sudo docker build -f ../docker/dockerfile -t $OPENLDAP_IMAGE ../docker
+sudo docker build -f ../docker/dockerfile -t $OPENLDAP_IMAGE ..
 
 # if [[ $? -ne 0 ]]; then echo "Docker build for openldap failed"; exit; fi
 
@@ -102,6 +102,8 @@ spec:
     # while slapd is running. They will not persist across a restart.
     rootdn "cn=admin,cn=config"
     rootpw secretcr
+    # This allows access using ldapi:/// and integrated authentication, which seems to be disabled by default for db config
+    access to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
 
     #######################################################################
     # MDB database definitions

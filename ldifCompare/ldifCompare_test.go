@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -258,14 +257,10 @@ result: 0 Success
 # numEntries: 5
 `
 
-func TestParseLdif(t *testing.T) {
-
-}
-
 func TestLdifCompare(t *testing.T) {
 	ldapModify := compareLdif(parseLdif(newLdif), parseLdif(currentLdif))
-	fmt.Println("\n-------------------")
-	fmt.Println(ldapModify)
+
+	// ldapModify should contain this
 
 	/*
 		dn: newEntry
@@ -274,7 +269,6 @@ func TestLdifCompare(t *testing.T) {
 
 		dn: olcDatabase={-1}frontend,cn=config
 		changetype: modify
-		-
 		add: newAttribute
 		newAttribute: newAttribute!
 		-
@@ -288,7 +282,7 @@ func TestLdifCompare(t *testing.T) {
 	if !strings.Contains(ldapModify, "dn: newEntry\nchangetype: add\ntheAttr: theValue") {
 		t.Fatal("Missing", "dn: newEntry\nchangetype: add\ntheAttr: theValue")
 	}
-	if !strings.Contains(ldapModify, "dn: olcDatabase={-1}frontend,cn=config\nchangetype: modify\n-\nadd: newAttribute\nnewAttribute: newAttribute!") {
+	if !strings.Contains(ldapModify, "dn: olcDatabase={-1}frontend,cn=config\nchangetype: modify\nadd: newAttribute\nnewAttribute: newAttribute!") {
 		t.Fatal("Missing", "dn: olcDatabase={-1}frontend,cn=config\nchangetype: modify\n-\nadd: newAttribute\nnewAttribute: newAttribute!")
 	}
 	if !strings.Contains(ldapModify, "delete: olcMonitoring\nolcMonitoring: FALSE") {
