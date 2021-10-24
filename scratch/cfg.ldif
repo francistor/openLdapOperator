@@ -1,0 +1,118 @@
+# extended LDIF
+#
+# LDAPv3
+# base <cn=config> with scope subtree
+# filter: (!(objectClass=olcSchemaConfig))
+# requesting: * 
+#
+
+# config
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcConfigFile: /usr/local/etc/openldap/slapd.conf
+olcConfigDir: /usr/local/etc/openldap/slapd.d
+olcArgsFile: /usr/local/var/run/slapd.args
+olcAttributeOptions: lang-
+olcAuthzPolicy: none
+olcConcurrency: 0
+olcConnMaxPending: 98
+olcConnMaxPendingAuth: 1000
+olcGentleHUP: FALSE
+olcIdleTimeout: 0
+olcIndexSubstrIfMaxLen: 4
+olcIndexSubstrIfMinLen: 2
+olcIndexSubstrAnyLen: 4
+olcIndexSubstrAnyStep: 2
+olcIndexHash64: FALSE
+olcIndexIntLen: 4
+olcListenerThreads: 1
+olcLocalSSF: 71
+olcLogLevel: 0
+olcMaxFilterDepth: 1000
+olcPidFile: /usr/local/var/run/slapd.pid
+olcReadOnly: FALSE
+olcSaslAuxpropsDontUseCopyIgnore: FALSE
+olcSaslSecProps: noplain,noanonymous
+olcSockbufMaxIncoming: 262143
+olcSockbufMaxIncomingAuth: 16777215
+olcThreads: 16
+olcThreadQueues: 1
+olcTLSCRLCheck: none
+olcTLSVerifyClient: demand
+olcTLSProtocolMin: 0.0
+olcToolThreads: 1
+olcWriteTimeout: 0
+
+# {-1}frontend, config
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+olcAddContentAcl: FALSE
+olcLastMod: TRUE
+olcLastBind: TRUE
+olcMaxDerefDepth: 0
+olcReadOnly: FALSE
+olcSchemaDN: cn=Subschema
+olcSyncUseSubentry: FALSE
+olcMonitoring: FALSE
+
+# {0}config, config
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcAccess: {0}to *  by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage  by * +0 break
+olcAddContentAcl: TRUE
+olcLastMod: TRUE
+olcLastBind: TRUE
+olcMaxDerefDepth: 15
+olcReadOnly: FALSE
+olcRootDN: cn=admin,cn=config
+olcRootPW: secretcr
+olcSyncUseSubentry: FALSE
+olcMonitoring: FALSE
+
+# {1}mdb, config
+dn: olcDatabase={1}mdb,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcMdbConfig
+olcDatabase: {1}mdb
+olcDbDirectory: /usr/local/var/openldap-data
+olcSuffix: dc=minsait,dc=com
+olcAddContentAcl: FALSE
+olcLastMod: TRUE
+olcLastBind: TRUE
+olcMaxDerefDepth: 15
+olcReadOnly: FALSE
+olcRootDN: cn=Manager,dc=minsait,dc=com
+olcRootPW: secretcr
+olcSyncUseSubentry: FALSE
+olcMonitoring: TRUE
+olcDbNoSync: FALSE
+olcDbIndex: objectClass eq
+olcDbMaxReaders: 0
+olcDbMaxSize: 1073741824
+olcDbMode: 0600
+olcDbSearchStack: 16
+olcDbMaxEntrySize: 0
+olcDbRtxnSize: 10000
+
+# {2}monitor, config
+dn: olcDatabase={2}monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {2}monitor
+olcAddContentAcl: FALSE
+olcLastMod: TRUE
+olcLastBind: TRUE
+olcMaxDerefDepth: 15
+olcReadOnly: FALSE
+olcSyncUseSubentry: FALSE
+olcMonitoring: FALSE
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 6
+# numEntries: 5

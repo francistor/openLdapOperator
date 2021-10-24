@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"reflect"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -26,6 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -39,6 +42,10 @@ import (
 type OpenldapReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	// Added for execution of commands
+	RESTClient rest.Interface
+	RESTConfig *rest.Config
 }
 
 //+kubebuilder:rbac:groups=openldap.minsait.com,resources=openldaps,verbs=get;list;watch;create;update;patch;delete
@@ -80,28 +87,85 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	existingConfigMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingConfigMap)
 	if err != nil && errors.IsNotFound(err) {
+		// ConfigMap does not exist. Create it
 		configMap := r.configMapForOpenldap((openldap))
 		log.Info("About to create ConfigMap for Openldap")
 		if err := r.Create(ctx, configMap); err != nil {
 			log.Error(err, "Error creating Configmap")
 			return ctrl.Result{}, err
 		}
-		// Configmap creted. Return and requeue
+		// Configmap created. Return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Configmap")
 		return ctrl.Result{}, err
 	} else {
 		// Update configuration if it has changed in CR
-		if existingConfigMap.Data["config"] != openldap.Spec.Config {
-			existingConfigMap.Data["config"] = openldap.Spec.Config
+		if existingConfigMap.Data["slapd.conf"] != openldap.Spec.Config {
+			existingConfigMap.Data["slapd.conf"] = openldap.Spec.Config
 			log.Info("About to change configmap")
 			err := r.Update(ctx, existingConfigMap)
-			// TODO: Force update of configuration, since configmap contents will not be applied as configuration in the Openldap image
+
 			if err != nil {
 				log.Error(err, "Could not update configuration")
 				return ctrl.Result{}, err
 			}
+
+			// Force update of configuration, since configmap contents will not be applied as configuration in the Openldap image
+			// This is done by executing a command in the pod, which takes the new config to apply through stdin
+			// https://github.com/kubernetes-sigs/kubebuilder/issues/803
+			existingPod := &corev1.Pod{}
+			err = r.Get(ctx, types.NamespacedName{Name: "openldap-" + openldap.Name, Namespace: openldap.Namespace}, existingPod)
+			if err != nil && errors.IsNotFound(err) {
+				log.Info("The openldap pod does not exist yet")
+				return ctrl.Result{RequeueAfter: time.Minute}, nil
+			} else if err != nil {
+				log.Error(err, "Could not get the openLdap pod")
+				return ctrl.Result{}, err
+			}
+
+			req := r.RESTClient.Post().
+				Namespace(existingPod.Namespace).
+				Resource("pods").
+				Name(existingPod.Name).
+				SubResource("exec").
+				VersionedParams(&corev1.PodExecOptions{
+					Container: existingPod.Spec.Containers[0].Name,
+					Command:   []string{"/ldifCompare/bin/updateLdapConfig.sh"},
+					Stdin:     true,
+					Stdout:    true,
+					Stderr:    true,
+					TTY:       false,
+				}, runtime.NewParameterCodec(r.Scheme))
+
+			exec, err := remotecommand.NewSPDYExecutor(r.RESTConfig, "POST", req.URL())
+			if err != nil {
+				log.Error(err, "Could not build the remote command executor")
+				return ctrl.Result{}, err
+			}
+
+			in := strings.NewReader(openldap.Spec.Config)
+			out := strings.Builder{}
+			eout := strings.Builder{}
+
+			// Connect this process' std{in,out,err} to the remote shell process.
+			err = exec.Stream(remotecommand.StreamOptions{
+				Stdin:  in,
+				Stdout: &out,
+				Stderr: &eout,
+				Tty:    false,
+			})
+
+			if err != nil {
+				log.Error(err, "Could not execute update comand in LDAP pod")
+				return ctrl.Result{}, err
+			}
+
+			log.Info("Update Command executed")
+			log.Info("Stdout: " + out.String())
+			log.Info("Stderr: " + eout.String())
+
+			// Give some time to have the configmap update
 			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		}
 	}
@@ -124,7 +188,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	} else {
 		// Check sizeRequests
 		if existingPVC.Spec.Resources.Requests["storage"] != openldap.Spec.StorageSize {
-			log.Error(err, "Existing PVC size does not match the requested one")
+			log.Error(err, "Existing PVC size does not match the requested one. You should consider deleting the existing PVC")
 			log.Info(fmt.Sprintf("#%v, #%v", existingPVC.Spec.Resources.Requests["storage"], openldap.Spec.StorageSize))
 			return ctrl.Result{}, err
 		}
@@ -141,7 +205,7 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{}, err
 		}
 		// Pod created. Return and requeue
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pod")
 		return ctrl.Result{}, err
@@ -191,6 +255,8 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	}
 
+	log.Info("Nothing to Reconcile")
+
 	return ctrl.Result{}, nil
 }
 
@@ -198,7 +264,8 @@ func (r *OpenldapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *OpenldapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&openldapv1alpha1.Openldap{}).
-		Owns(&corev1.Pod{}).Owns(&corev1.Service{}).Owns(&corev1.PersistentVolumeClaim{}).
+		// TODO: Check what happens if I remove some of the Owns
+		Owns(&corev1.Pod{}).Owns(&corev1.Service{}).Owns(&corev1.PersistentVolumeClaim{}).Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }
 

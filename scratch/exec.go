@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -38,7 +39,7 @@ func main() {
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Container: pod.Spec.Containers[0].Name,
-			Command:   []string{"/bin/sh"},
+			Command:   []string{"/ldifCompare/bin/updateLdapConfig.sh"},
 			Stdin:     true,
 			Stdout:    true,
 			Stderr:    true,
@@ -50,7 +51,12 @@ func main() {
 		panic(err)
 	}
 
-	in := strings.NewReader("ls")
+	//in := strings.NewReader("ls")
+	in, err := os.Open("cfg.ldif")
+	if err != nil {
+		panic(err)
+	}
+
 	out := strings.Builder{}
 	eout := strings.Builder{}
 
@@ -67,6 +73,6 @@ func main() {
 	}
 
 	fmt.Println("The stdout of the comand is: " + out.String())
-	fmt.Println("The stderr of the comand is: " + out.String())
+	fmt.Println("The stderr of the comand is: " + eout.String())
 
 }

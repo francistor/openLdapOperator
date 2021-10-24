@@ -25,9 +25,12 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -79,9 +82,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Include a RESTClient in the Controller, to be used toe execute commands
+	gvk := schema.GroupVersionKind{
+		Group:   "",
+		Version: "v1",
+		Kind:    "Pod",
+	}
+
+	restClient, err := apiutil.RESTClientForGVK(gvk, false, mgr.GetConfig(), serializer.NewCodecFactory(mgr.GetScheme()))
+	if err != nil {
+		setupLog.Error(err, "Unable to create REST client")
+		os.Exit(1)
+	}
+
+	// https://github.com/kubernetes-sigs/kubebuilder/issues/803
 	if err = (&controllers.OpenldapReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		RESTClient: restClient,
+		RESTConfig: mgr.GetConfig(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "Openldap")
 		os.Exit(1)
@@ -97,9 +116,55 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager. Version sept 23 ")
+	setupLog.Info("starting manager. Version Oct 24 ")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
+
+/*
+restClient := clientset.CoreV1().RESTClient()
+	req := restClient.Post().
+		Namespace(pod.Namespace).
+		Resource("pods").
+		Name(pod.Name).
+		SubResource("exec").
+		VersionedParams(&corev1.PodExecOptions{
+			Container: pod.Spec.Containers[0].Name,
+			Command:   []string{"/ldifCompare/bin/updateLdapConfig.sh"},
+			Stdin:     true,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       false,
+		}, scheme.ParameterCodec)
+
+	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err != nil {
+		panic(err)
+	}
+
+	//in := strings.NewReader("ls")
+	in, err := os.Open("cfg.ldif")
+	if err != nil {
+		panic(err)
+	}
+
+	out := strings.Builder{}
+	eout := strings.Builder{}
+
+	// Connect this process' std{in,out,err} to the remote shell process.
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdin:  in,
+		Stdout: &out,
+		Stderr: &eout,
+		Tty:    false,
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("The stdout of the comand is: " + out.String())
+	fmt.Println("The stderr of the comand is: " + eout.String())
+*/

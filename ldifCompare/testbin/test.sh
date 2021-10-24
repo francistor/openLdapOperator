@@ -4,10 +4,10 @@ SCRIPT_DIR="$(dirname $0 )"
 
 go build $SCRIPT_DIR/../ldifcompare.go
 
-# File specifying new configuration
+# Option 1: File specifying new configuration
 $SCRIPT_DIR/../ldifcompare --current $SCRIPT_DIR/../resources/current_ldif.txt --new $SCRIPT_DIR/../resources/new_ldif.txt 
 
-# Configuration read from standard input
+# Optinon 2: Configuration read from standard input
 echo ' 
 # extended LDIF
 #
