@@ -5,8 +5,8 @@
 *.dll
 *.so
 *.dylib
-bin
-testbin/*
+operator/ldapOperator
+ldifCompare/ldifCompare
 
 # Test binary, build with `go test -c`
 *.test

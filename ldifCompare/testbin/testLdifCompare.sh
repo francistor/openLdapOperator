@@ -7,7 +7,7 @@ go build $SCRIPT_DIR/../ldifcompare.go
 # Option 1: File specifying new configuration
 $SCRIPT_DIR/../ldifcompare --current $SCRIPT_DIR/../resources/current_ldif.txt --new $SCRIPT_DIR/../resources/new_ldif.txt 
 
-# Optinon 2: Configuration read from standard input
+# Option 2: Configuration read from standard input
 echo ' 
 # extended LDIF
 #
