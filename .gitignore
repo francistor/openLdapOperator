@@ -7,6 +7,8 @@
 *.dylib
 operator/ldapOperator
 ldifCompare/ldifCompare
+ldifCompare/ldifcompare
+tests/output
 
 # Test binary, build with `go test -c`
 *.test

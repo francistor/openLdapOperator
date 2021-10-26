@@ -2,7 +2,7 @@ Your description here
 
 *** Settings ***
 Library           Process
-Suite Setup       Initial data
+Suite Setup       Load Initial data
 Suite Teardown    Terminate All Processes    kill=True
 
 *** Variables ***
@@ -26,7 +26,7 @@ Find the last created entry
     Should Be Equal As Integers    ${result.rc}    0
 
 *** Keywords ***
-Initial data
+Load Initial data
     # This deleting, if executed on a fresh installation, makes openldap restart
     # ${result} =    Run Process    ldapdelete    -h    ${ldaphost}    -p    ${ldapport}    -x    -wsecret    -D    cn\=Manager,dc\=minsait,dc\=com    -r    dc\=minsait,dc\=com
     # log    ${result.stderr}    console=True

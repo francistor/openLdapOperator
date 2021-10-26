@@ -34,7 +34,7 @@ popd && kustomize build config/default | kubectl apply -f -
 popd
 
 # Deploy one openldap instance
-cat ldapResource.yaml | kubectl apply -f -
+envsubst < ldapResource.yaml | kubectl apply -f -
 
 # Test
 sudo apt update
