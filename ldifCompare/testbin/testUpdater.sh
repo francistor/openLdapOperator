@@ -6,9 +6,9 @@ echo '
 # Configuration from Custom Resource Definition
 # This file should NOT be world readable.
 #
-include		/usr/local/etc/openldap/schema/core.schema
-include 	/usr/local/etc/openldap/schema/cosine.schema 
-include 	/usr/local/etc/openldap/schema/inetorgperson.schema 
+include /usr/local/etc/openldap/schema/core.schema
+include /usr/local/etc/openldap/schema/cosine.schema 
+include /usr/local/etc/openldap/schema/inetorgperson.schema 
 
 # Define global ACLs to disable default read access.
 
@@ -16,8 +16,8 @@ include 	/usr/local/etc/openldap/schema/inetorgperson.schema
 # service AND an understanding of referrals.
 #referral	ldap://root.openldap.org
 
-pidfile		/usr/local/var/run/slapd.pid
-argsfile	/usr/local/var/run/slapd.args
+pidfile /usr/local/var/run/slapd.pid
+argsfile /usr/local/var/run/slapd.args
 
 # Load dynamic backend modules:
 # modulepath	/usr/local/libexec/openldap
@@ -67,20 +67,22 @@ access to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth 
 # MDB database definitions
 #######################################################################
 
-database	mdb
-maxsize		1073741824
-suffix		"dc=minsait,dc=com"
-rootdn		"cn=Manager,dc=minsait,dc=com"
+database mdb
+maxsize 1073741824
+suffix "dc=minsait,dc=com"
+rootdn "cn=Manager,dc=minsait,dc=com"
 # Cleartext passwords, especially for the rootdn, should
 # be avoid.  See slappasswd(8) and slapd.conf(5) for details.
 # Use of strong authentication encouraged.
-rootpw		secretcr
+rootpw secretcr
 # The database directory MUST exist prior to running slapd AND 
 # should only be accessible by the slapd and slap tools.
 # Mode 700 recommended.
-directory	/usr/local/var/openldap-data
+directory /usr/local/var/openldap-data
 # Indices to maintain
-index	objectClass	eq
+index objectClass	eq
+# Asnync writes <------------------ Change here!
+dbnosync FALSE
 
 #######################################################################
 # monitor database definitions

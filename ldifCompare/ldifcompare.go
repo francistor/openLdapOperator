@@ -58,8 +58,10 @@ func (l ldapEntryList) Len() int {
 	return len(l)
 }
 
+// Sort order for dn is defined the oposite as lexicographic order, to have the leaf entries
+// before
 func (l ldapEntryList) Less(i, j int) bool {
-	return l[i].dn < l[j].dn
+	return l[i].dn > l[j].dn
 }
 
 func (l ldapEntryList) Swap(i, j int) {
@@ -192,13 +194,14 @@ func parseLdif(ldif string) ldapEntryList {
 			}
 		}
 
-		// A line MUST be of the form attrName: AttrValue
-		attrAndValue := strings.Split(line, ":")
+		// A line MUST be of the form attrName: AttrValue-posibly-including other ":""
+		// This function will leave the ":" at the end, which is later removed using "TrimSuffix"
+		attrAndValue := strings.SplitAfterN(line, ":", 2)
 		if len(attrAndValue) != 2 {
 			fmt.Println("[ERROR] Line not valid: ", line)
 			os.Exit(1)
 		}
-		attr := strings.TrimSpace(attrAndValue[0])
+		attr := strings.TrimSpace(strings.TrimSuffix(attrAndValue[0], ":"))
 		value := strings.TrimSpace(attrAndValue[1])
 
 		if attr == "dn" {
@@ -230,7 +233,7 @@ func parseLdif(ldif string) ldapEntryList {
 		}
 	}
 
-	// Sort the entries
+	// Sort the entries (reverse order)
 	sort.Sort(ldapEntries)
 
 	return ldapEntries
@@ -259,9 +262,11 @@ func compareLdif(targetLdif ldapEntryList, currentLdif ldapEntryList) string {
 	for {
 		if targetPos < len(targetLdif) {
 			if currentPos < len(currentLdif) {
-				if currentLdif[currentPos].dn < targetLdif[targetPos].dn {
+				// Sort order for dn is defined the oposite as lexicographic order, to have the leaf entries
+				// before (see func Less)
+				if currentLdif[currentPos].dn > targetLdif[targetPos].dn {
 					operation = "delete"
-				} else if currentLdif[currentPos].dn > targetLdif[targetPos].dn {
+				} else if currentLdif[currentPos].dn < targetLdif[targetPos].dn {
 					operation = "add"
 				} else {
 					operation = "compare"

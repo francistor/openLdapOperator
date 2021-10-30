@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -259,6 +260,9 @@ result: 0 Success
 
 func TestLdifCompare(t *testing.T) {
 	ldapModify := compareLdif(parseLdif(newLdif), parseLdif(currentLdif))
+
+	fmt.Println("hello")
+	fmt.Println(ldapModify)
 
 	// ldapModify should contain this
 
