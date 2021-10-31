@@ -76,6 +76,7 @@ rm -rf /tmp/slapd.d && mkdir -p /tmp/slapd.d
 slaptest -n 0 -f /tmp/new.conf -F /tmp/slapd.d
 
 # Aggregate the .ldif files using function | unwrap lines | generate changes to apply
+# This line is for better testing only
 dump_ldif_from_tree /tmp/slapd.d | 
   sed -n '1 {h; $ !d}; $ {x; s/\n //g; p}; /^ / {H; d}; /^ /! {x; s/\n //g; p}' > /tmp/new.ldif
 

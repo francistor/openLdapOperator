@@ -77,7 +77,7 @@ spec:
     suffix		"dc=minsait,dc=com"
     rootdn		"cn=Manager,dc=minsait,dc=com"
     # Cleartext passwords, especially for the rootdn, should
-    # be avoid.  See slappasswd(8) and slapd.conf(5) for details.
+    # be avoided.  See slappasswd(8) and slapd.conf(5) for details.
     # Use of strong authentication encouraged.
     rootpw		secretcr
     # The database directory MUST exist prior to running slapd AND 
@@ -86,6 +86,8 @@ spec:
     directory	/usr/local/var/openldap-data
     # Indices to maintain
     index	objectClass	eq
+    # Asnync writes <------------------ Change here!
+    dbnosync FALSE
 
     #######################################################################
     # monitor database definitions

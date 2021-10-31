@@ -5,7 +5,7 @@ SCRIPT_DIR="$(dirname $0 )"
 go build $SCRIPT_DIR/../ldifcompare.go
 
 # Option 1: File specifying new configuration
-$SCRIPT_DIR/../ldifcompare --current $SCRIPT_DIR/../resources/current_ldif.txt --new $SCRIPT_DIR/../resources/new_ldif.txt 
+$SCRIPT_DIR/../ldifcompare --current $SCRIPT_DIR/resources/current_ldif.txt --new $SCRIPT_DIR/resources/new_ldif.txt 
 
 # Option 2: Configuration read from standard input
 echo ' 
@@ -130,4 +130,4 @@ search: 2
 result: 0 Success
 
 # numResponses: 6
-# numEntries: 5' | $SCRIPT_DIR/../ldifcompare --current $SCRIPT_DIR/../resources/current_ldif.txt
+# numEntries: 5' | $SCRIPT_DIR/ldifcompare --current $SCRIPT_DIR/resources/current_ldif.txt

@@ -7,7 +7,7 @@ Suite Teardown    Terminate All Processes    kill=True
 
 *** Variables ***
 # Requres the initial-data.ldif file in the current directory
-${ldaphost}    %{LOADBALANCER_IP_ADDRESS} 
+${ldaphost}    %{LOADBALANCER_IP_ADDRESS=192.168.122.210}
 ${ldapport}    389
 ${number_of_clients}    999    
 ${number_of_clients_digits}    3    # 999 has 3 digits
